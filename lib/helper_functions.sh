@@ -79,10 +79,16 @@ function update_document {
               }
          }' \
      "${JIVE_ENDPOINT}contents/${CONTENT_ID}" > $OUTPUT
-  NEW_VERSION=$(cat $OUTPUT | jq -r '.version')
-  if [ "$NEW_VERSION" = "null" -o "$NEW_VERSION" = "" ] ; then
-    cat $OUTPUT | jq -r '.error.status, .error.message '
+  FILETYPE=$(file $OUTPUT)
+  if [ "${FILETYPE%% *}" = "gzip" ] ; then
+    zcat $OUTPUT | grep "<title>"
   else
-    echo "Uploaded DOC-${DOC_ID} version ${NEW_VERSION}"
+    NEW_VERSION=$(cat $OUTPUT | jq -r '.version')
+    if [ "$NEW_VERSION" = "null" -o "$NEW_VERSION" = "" ] ; then
+      cat $OUTPUT | jq -r '.error.status, .error.message '
+    else
+      echo "Uploaded DOC-${DOC_ID} version ${NEW_VERSION}"
+    fi
   fi
 }
+
