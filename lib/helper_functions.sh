@@ -2,6 +2,12 @@
 
 JIVE_ENDPOINT="https://community.rea-group.com/api/core/v3/"
 
+# Config file can set JIVE_ENDPOINT and JIVE_USER
+if [ -f ~/.jive ] ; then
+	. ~/.jive
+fi
+
+
 function set_doc_id {
   if [ -z "$1" ]; then
     echo -n "Please supply a Document ID: "
@@ -13,13 +19,17 @@ function set_doc_id {
 }
 
 function set_login {
-  local default_user=$USER
-  echo -n "Username [$default_user]: "
-  read username
-  if [ -z "$username" ]; then
-    USER_ID="$default_user"
+  if [ "$JIVE_USER" ] ; then
+    USER_ID="$JIVE_USER"
   else
-    USER_ID="$username"
+    local default_user=$USER
+    echo -n "Username [$default_user]: "
+    read username
+    if [ -z "$username" ]; then
+      USER_ID="$default_user"
+    else
+      USER_ID="$username"
+    fi
   fi
 }
 
@@ -45,14 +55,18 @@ function edit_document {
   echo -n "Would you like to edit "${SUBJECT}" [y/n]? "
   read answer
   if [ "${answer}" = "y" ]; then
-    vim tmp.txt < `tty` > `tty`
-    CONTENT=$( cat tmp.txt )
+    vim tmp.txt
+    CONTENT=$( cat tmp.txt | jq --slurp --raw-input . )
+    echo "Content is:"
+    echo "$CONTENT"
+    echo
   else
     echo ":( control D out pls"
   fi
 }
 
 function update_document {
+  OUTPUT=$(mktemp --tmpdir jiveXXXX)
   curl -s -u "$USER_ID":"$USER_PW" -X PUT \
      -k --header "Content-Type: application/json" \
      -d '{ "subject": '"${SUBJECT}"',
@@ -64,6 +78,11 @@ function update_document {
                 "text": '"${CONTENT}"'
               }
          }' \
-     "${JIVE_ENDPOINT}contents/${CONTENT_ID}" > output.txt
-  echo "Uploaded DOC-${DOC_ID}"
+     "${JIVE_ENDPOINT}contents/${CONTENT_ID}" > $OUTPUT
+  NEW_VERSION=$(cat $OUTPUT | jq -r '.version')
+  if [ "$NEW_VERSION" = "null" -o "$NEW_VERSION" = "" ] ; then
+    cat $OUTPUT | jq -r '.error.status, .error.message '
+  else
+    echo "Uploaded DOC-${DOC_ID} version ${NEW_VERSION}"
+  fi
 }
