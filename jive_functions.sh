@@ -1,6 +1,7 @@
 #!/bin/bash
 
 source lib/helper_functions.sh
+source lib/create_doc.sh
 
 function update {
   set_doc_id $1
