@@ -9,6 +9,7 @@ function update {
   set_password
   get_content_id
   load_document
-  edit_document
-  update_document
+  if edit_document ; then
+    update_document
+  fi
 }

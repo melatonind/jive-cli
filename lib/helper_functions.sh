@@ -45,23 +45,34 @@ function get_content_id {
 
 function load_document {
   echo "Retrieving DOC-${DOC_ID}..."
-  curl -u "$USER_ID":"$USER_PW" "${JIVE_ENDPOINT}contents/$CONTENT_ID" | tail -n +2 > tmp.txt
-  SUBJECT=$( cat tmp.txt | jq .subject )
-  CONTENT=$( cat tmp.txt | jq .content.text )
-  echo $CONTENT > tmp.txt
+  FILE1=$(mktemp --tmpdir jiveXXXX)
+  FILE2=$(mktemp --tmpdir jiveXXXX)
+  curl -u "$USER_ID":"$USER_PW" "${JIVE_ENDPOINT}contents/$CONTENT_ID" | tail -n +2 > $FILE1
+  SUBJECT=$( cat $FILE1 | jq -r .subject )
+  cat $FILE1 | jq -r .content.text > $FILE2
+  cat $FILE2 > $FILE1
+  CONTENT=$FILE1
+  CONTENT_ORIGINAL=$FILE2
 }
 
 function edit_document {
   echo -n "Would you like to edit "${SUBJECT}" [y/n]? "
   read answer
   if [ "${answer}" = "y" ]; then
-    vim tmp.txt
-    CONTENT=$( cat tmp.txt | jq --slurp --raw-input . )
-    echo "Content is:"
-    echo "$CONTENT"
-    echo
+    vim $CONTENT
+    if cmp -s $CONTENT $CONTENT_ORIGINAL ; then
+      echo "No changes"
+      false
+    else
+      echo "Changes detected"
+      CONTENT=$( cat $CONTENT | jq --slurp --raw-input . )
+      echo "Content is:"
+      echo "$CONTENT"
+      echo
+      true
+    fi
   else
-    echo ":( control D out pls"
+    false
   fi
 }
 
