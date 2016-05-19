@@ -65,7 +65,7 @@ function edit_document {
       false
     else
       echo "Changes detected"
-      CONTENT=$( cat $CONTENT | jq --slurp --raw-input . )
+      CONTENT=$( cat $CONTENT | sed ':a;N;$!ba;s/\n/<br>/g' | jq --slurp --raw-input . )
       echo "Content is:"
       echo "$CONTENT"
       echo
