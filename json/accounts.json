@@ -1,0 +1,17 @@
+{
+  "276072356821": 
+    {
+      "name": "Sample Account",
+      "email": "sample@hackday.com",
+      "custodian": "Team A"
+    },
+  "123487120953": 
+    {
+      "name": "Test Account",
+      "email": "test@hackday.com",
+      "custodian": "Hack Day",
+      "direct_connect": true
+    }
+  
+}
+
