@@ -13,3 +13,13 @@ function update {
     update_document
   fi
 }
+
+function update_md {
+  set_doc_id $1
+  set_login
+  set_password
+  get_content_id
+  load_document
+  CONTENT=$( cat $2 | jq --slurp --raw-input . )
+  update_document
+}

@@ -33,9 +33,9 @@ $o[] = $b;
 $filename = $_SERVER['argv'][1];
 $file = file_get_contents($filename, true);
 $json = json_decode($file);
-//print_r($json);
-foreach($json as $account)
+foreach($json as $id => $account)
 {
+	$account->id = $id;
 	$line = "|";
 	foreach($headings as $index => $heading)
 	{
