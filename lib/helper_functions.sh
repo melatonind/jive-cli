@@ -1,7 +1,16 @@
 #!/bin/bash
 
 JIVE_ENDPOINT="https://community.rea-group.com/api/core/v3/"
-DOC_ID=$1
+
+function set_doc_id {
+  if [ -z "$1" ]; then
+    echo -n "Please supply a Document ID: "
+    read DOC_ID
+  else
+    DOC_ID=$1
+    echo "Set doc_id"
+  fi
+}
 
 function set_login {
   local default_user=$USER
@@ -20,7 +29,7 @@ function set_password {
 }
 
 function get_content_id {
-  echo "Retrieving content ID..."
+  echo "Retrieving content ID from DOC-${DOC_ID}..."
   CONTENT_ID=$(curl -u "$USER_ID":"$USER_PW" "${JIVE_ENDPOINT}contents?filter=entityDescriptor(102,${DOC_ID})" | tail -n +2 | jq -r .list[].contentID)
 }
 
@@ -33,8 +42,14 @@ function load_document {
 }
 
 function edit_document {
-  vim tmp.txt < `tty` > `tty`
-  CONTENT=$( cat tmp.txt )
+  echo -n "Would you like to edit "${SUBJECT}" [y/n]? "
+  read answer
+  if [ "${answer}" = "y" ]; then
+    vim tmp.txt < `tty` > `tty`
+    CONTENT=$( cat tmp.txt )
+  else
+    echo ":( control D out pls"
+  fi
 }
 
 function update_document {
@@ -46,16 +61,9 @@ function update_document {
            "tags" : [ ],
            "content":
               { "type": "text/html",
-                "text": '$CONTENT'
+                "text": '"${CONTENT}"'
               }
          }' \
-     "${JIVE_ENDPOINT}contents/95349"
+     "${JIVE_ENDPOINT}contents/${CONTENT_ID}" > output.txt
   echo "Uploaded DOC-${DOC_ID}"
 }
-
-set_login
-set_password
-get_content_id
-load_document
-edit_document
-update_document
