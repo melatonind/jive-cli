@@ -29,15 +29,9 @@ function create_doc {
 (
 #set -o errexit
 #set -o xtrace
-#Some TODO
-# instead of README, accept any md file
-# allow user to give a space in Jive for the document to be created
-# delete visibility hidden line
-# Prettiffy this script
 
   convert_md
 
-#assumes .MD file is in a git repo
 REPO_NAME=`git config --local remote.origin.url|sed -n 's#.*/\([^.]*\)\.git#\1#p'`
 OUTPUT=$(mktemp -t jiveXXXX)
 curl -u "$USER_ID":"$USER_PW" \
