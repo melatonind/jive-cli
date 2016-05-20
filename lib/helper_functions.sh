@@ -45,8 +45,8 @@ function get_content_id {
 
 function load_document {
   echo "Retrieving DOC-${DOC_ID}..."
-  FILE1=$(mktemp --tmpdir jiveXXXX)
-  FILE2=$(mktemp --tmpdir jiveXXXX)
+  FILE1=$(mktemp -t jiveXXXX)
+  FILE2=$(mktemp -t jiveXXXX)
   curl -u "$USER_ID":"$USER_PW" "${JIVE_ENDPOINT}contents/$CONTENT_ID" | tail -n +2 > $FILE1
   SUBJECT=$( cat $FILE1 | jq -r .subject )
   cat $FILE1 | jq -r .content.text > $FILE2
@@ -77,7 +77,7 @@ function edit_document {
 }
 
 function update_document {
-  OUTPUT=$(mktemp --tmpdir jiveXXXX)
+  OUTPUT=$(mktemp -t jiveXXXX)
   curl -s -u "$USER_ID":"$USER_PW" -X PUT \
      -k --header "Content-Type: application/json" \
      -d '{ "subject": '"${SUBJECT}"',
