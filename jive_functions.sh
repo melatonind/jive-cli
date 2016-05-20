@@ -5,7 +5,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source $DIR/lib/helper_functions.sh
 source $DIR/lib/create_doc.sh
 
-function update {
+function jive_update {
   set_doc_id $1
   set_login
   (
@@ -18,7 +18,7 @@ function update {
   )
 }
 
-function update_html {
+function jive_update_html {
   set_doc_id $1
   set_login
   (
@@ -30,7 +30,7 @@ function update_html {
   )
 }
 
-function find_places {
+function jive_find_places {
   set_login
   (
   set_password
@@ -39,7 +39,7 @@ function find_places {
   )
 }
 
-function update_doc {
+function jive_update_doc {
   set_doc_id_for_update
   set_login
   set_password

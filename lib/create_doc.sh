@@ -20,7 +20,7 @@ function convert_md {
   CONTENT=$(pandoc -f markdown_github -t html "${filename}.md" | jq --slurp --raw-input . )
 }
 
-function create_doc {
+function jive_create_doc {
 
   set_login
   set_password

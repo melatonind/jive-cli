@@ -1,24 +1,33 @@
 # jive-cli
 
+Let *jive-cli* change the way you think about publishing in community!
+
+To get started, 
 `source jive_functions.sh`
+
 
 Update an existing document in VIM:
 
-`update <DOC-ID>`
+`jive_update <DOC-ID>`
 
-Upload your README.md:
-Make sure you're in the same file as your README.md
+Upload your markdown file:
+`jive_create_doc`
 
-`create_doc`
+Or update and existing version with
+`jive_update_doc <DOC-ID>`
 
-`update_doc <DOC-ID>`
-
-`JIVE_FILENAME=README update_doc <DOC-ID>`
+Want to bypass the filename prompt?
+`JIVE_FILENAME=README jive_update_doc <DOC-ID>`
 
 Update an existing jive document by supplying an html file:
+`jive_update_html <DOC-ID>`
 
-`update_html <DOC-ID>`
+Can't remember your DOC ID? Search for the ID of an existing DOC
+`JIVE_SUBJECT="Subject to search" jive_search_by_subject`
 
-Find the ID of an existing DOC
-`JIVE_SUBJECT="Subject to search" search_by_subject`
+# Requirements
+-bash
+-jq
+-pandoc
+
 
