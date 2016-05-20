@@ -30,14 +30,8 @@ function update_doc {
   set_password
   get_content_id
   load_document
- 
-echo -n "Pls enter your filename - must be in current dir, .md files only:"
-read filename
-pandoc ${filename}.md > f1.tmp
-sed -e 's/"/\\"/g' f1.tmp  > f2.tmp
-cat f2.tmp | tr -d '\012' > f3.tmp
-CONTENT=`cat f3.tmp`
-
-  update_document
+  if convert_md ; then
+    update_document
+  fi
 }
 
