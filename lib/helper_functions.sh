@@ -63,7 +63,7 @@ function get_content_id {
   CONTENT_ID=$(curl -u "$USER_ID":"$USER_PW" "${JIVE_ENDPOINT}contents?filter=entityDescriptor(102,${DOC_ID})" | tail -n +2 | jq -r .list[].contentID)
 }
 
-function search_by_subject {
+function jive_search_by_subject {
   echo "Searching for '$JIVE_SUBJECT'"
   SEARCH=$(echo $JIVE_SUBJECT | tr " " ",")
   echo "Searching for '$SEARCH'"
