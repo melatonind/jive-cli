@@ -42,6 +42,15 @@ function get_content_id {
   CONTENT_ID=$(curl -u "$USER_ID":"$USER_PW" "${JIVE_ENDPOINT}contents?filter=entityDescriptor(102,${DOC_ID})" | tail -n +2 | jq -r .list[].contentID)
 }
 
+function search_by_subject {
+  echo "Searching for '$JIVE_SUBJECT'"
+  SEARCH=$(echo $JIVE_SUBJECT | tr " " ",")
+  echo "Searching for '$SEARCH'"
+  curl -u "$USER_ID":"$USER_PW" "${JIVE_ENDPOINT}contents?filter=search($SEARCH)" | \
+	 tail -n +2 | \
+	 jq -r " .list | map(if .subject == \"$JIVE_SUBJECT\" then ( \"DOC-\" + .id + \" in \" + .parentPlace.name + \" (\" + .author.displayName + \")\" ) else empty end ) "
+}
+
 function load_document {
   echo "Retrieving DOC-${DOC_ID}..."
   FILE1=$(mktemp -t jiveXXXX)
