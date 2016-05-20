@@ -3,10 +3,13 @@
 #Stop on error
 
 function convert_md {
-  echo -n "Pls enter your filename - must be in current dir, .md files only [README]:"
-  read filename
+  if [ -z "$JIVE_FILENAME" ] ; then
+    JIVE_FILENAME=README
+    echo -n "Pls enter your filename - must be in current dir, .md files only [$JIVE_FILENAME]:"
+    read filename
+  fi
   if [ -z "$filename" ] ; then
-    filename=README
+    filename=$JIVE_FILENAME
   fi
   if [ -f "${filename}.md" ] ; then
     echo "Processing ${filename}.md"

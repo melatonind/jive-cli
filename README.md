@@ -11,6 +11,10 @@ Make sure you're in the same file as your README.md
 
 `create_doc`
 
+`update_doc <DOC-ID>`
+
+`JIVE_FILENAME=README update_doc <DOC-ID>`
+
 Update an existing jive document by supplying an html file:
 
 `update_html <DOC-ID>`
