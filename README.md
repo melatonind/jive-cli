@@ -19,3 +19,6 @@ Update an existing jive document by supplying an html file:
 
 `update_html <DOC-ID>`
 
+Find the ID of an existing DOC
+`JIVE_SUBJECT="Subject to search" search_by_subject`
+
