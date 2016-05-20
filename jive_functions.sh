@@ -38,7 +38,7 @@ function find_places {
 }
 
 function update_doc {
-  set_doc_id $1
+  set_doc_id_for_update
   set_login
   set_password
   get_content_id
