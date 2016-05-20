@@ -15,27 +15,29 @@ set -o xtrace
 # delete visibility hidden line
 # Prettiffy this script
 
-pandoc README.md > f1.tmp
+echo -n "Pls enter your filename - must be in current dir, .md files only:"
+read filename
+pandoc ${filename}.md > f1.tmp
 sed -e 's/"/\\"/g' f1.tmp  > f2.tmp
 cat f2.tmp | tr -d '\012' > f3.tmp
-content=`cat f3.tmp`
+CONTENT=`cat f3.tmp`
 
 #assumes .MD file is in a git repo
-doc_name=`git config --local remote.origin.url|sed -n 's#.*/\([^.]*\)\.git#\1#p'`
+REPO_NAME=`git config --local remote.origin.url|sed -n 's#.*/\([^.]*\)\.git#\1#p'`
 
 curl -v -u "$USER_ID":"$USER_PW" \
      -k --header "Content-Type: application/json" \
      -d '{ "type": "document",
-           "subject": "'"${doc_name}"' README",
+           "subject": "'"${REPO_NAME}"' '"${filename}"'",
            "visibility": "hidden",
            "tags": [readme],
            "content":
               { "type": "text/html",
-                "text": "<body>'"${content}"'</body>"
+                "text": "<body>'"${CONTENT}"'</body>"
               }
          }' \
      "https://community.rea-group.com/api/core/v3/contents"
 
-rm *.tmp
+rm f*.tmp
 )
 }
