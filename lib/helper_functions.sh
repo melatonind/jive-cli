@@ -78,17 +78,23 @@ function edit_document {
 
 function update_document {
   OUTPUT=$(mktemp -t jiveXXXX)
-  curl -s -u "$USER_ID":"$USER_PW" -X PUT \
-     -k --header "Content-Type: application/json" \
-     -d '{ "subject": "'"${SUBJECT}"'",
+
+  JSON='{ "subject": "'"${SUBJECT}"'",
            "type": "document",
            "status" : "published",
            "tags" : [ ],
            "content":
               { "type": "text/html",
-                "text": "'"${CONTENT}"'"
+                "text": '"${CONTENT}"'
               }
-         }' \
+         }' 
+
+  #echo "$JSON" > broken.json
+  echo "$JSON" | jq . > /dev/null || return 1
+
+  curl -s -u "$USER_ID":"$USER_PW" -X PUT \
+     -k --header "Content-Type: application/json" \
+     -d "$JSON" \
      "${JIVE_ENDPOINT}contents/${CONTENT_ID}" > $OUTPUT
   FILETYPE=$(file $OUTPUT)
   if [ "${FILETYPE%% *}" = "gzip" ] ; then
