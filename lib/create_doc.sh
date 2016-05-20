@@ -2,6 +2,21 @@
 
 #Stop on error
 
+function convert_md {
+  echo -n "Pls enter your filename - must be in current dir, .md files only [README]:"
+  read filename
+  if [ -z "$filename" ] ; then
+    filename=README
+  fi
+  if [ -f "${filename}.md" ] ; then
+    echo "Processing ${filename}.md"
+  else
+    echo "File not found: ${filename}.md"
+    return 1
+  fi
+  CONTENT=$(pandoc -f markdown_github -t html "${filename}.md" | jq --slurp --raw-input . )
+}
+
 function create_doc {
 
   set_login
