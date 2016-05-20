@@ -24,6 +24,8 @@ function create_doc {
 
   set_login
   set_password
+  search_place
+  set_place_id
 (
 #set -o errexit
 #set -o xtrace
@@ -42,7 +44,8 @@ curl -u "$USER_ID":"$USER_PW" \
      -k --header "Content-Type: application/json" \
      -d '{ "type": "document",
            "subject": "'"${REPO_NAME}"' '"${filename}"'",
-           "visibility": "hidden",
+           "visibility": "place",
+           "parent": "'"${JIVE_ENDPOINT}"'places/'"${PLACE_ID}"'",
            "tags": [readme],
            "content":
               { "type": "text/html",

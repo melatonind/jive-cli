@@ -123,7 +123,7 @@ function search_place {
       echo "There are no more places"
       return
     fi
-    cat tmp.txt | tail -n +2 | jq -r '.list[] | .id + "   " + .name'
+    cat tmp.txt | tail -n +2 | jq -r '.list[] | .placeID + "   " + .name'
     echo -n "Have you found the place you were looking for? [y/n]? "
     read answer
     index=$(($index+25))
