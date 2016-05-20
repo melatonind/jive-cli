@@ -42,13 +42,15 @@ function jive_find_places {
 }
 
 function jive_update_doc {
-  set_doc_id_for_update
   set_login
+  (
   set_password
+  set_doc_id_for_update
   get_content_id
   load_document
   if convert_md ; then
     update_document
   fi
+  )
 }
 

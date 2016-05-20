@@ -18,9 +18,24 @@ function set_doc_id {
 }
 
 function set_doc_id_for_update {
-    echo -n "Please enter the name of document to update: "
-    read DOC_NAME
-    DOC_ID=$(cat .jivecli | awk -v var=$DOC_NAME '$1 == var {print $2}')
+  DEFAULT=README
+  if [ -z "$JIVE_FILENAME" ] ; then
+    echo -n "Pls enter your filename - must be in current dir, .md files only [$DEFAULT]:"
+    read filename
+    if [ -z "$filename" ] ; then
+      filename=$DEFAULT
+    fi
+  else
+    filename="$JIVE_FILENAME"
+  fi
+  if [ -f "${filename}.md" ] ; then
+    echo "Processing ${filename}.md"
+  else
+    echo "File not found: ${filename}.md"
+    return 1
+  fi
+  JIVE_FILENAME="${filename}"
+  DOC_ID=$(grep "^${filename} " .jivecli | tail -1 | cut -d ' ' -f 2)
 }
 
 function set_login {
