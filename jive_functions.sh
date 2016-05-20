@@ -1,7 +1,9 @@
 #!/bin/bash
 
-source lib/helper_functions.sh
-source lib/create_doc.sh
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+source $DIR/lib/helper_functions.sh
+source $DIR/lib/create_doc.sh
 
 function update {
   set_doc_id $1
