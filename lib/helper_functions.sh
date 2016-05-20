@@ -7,7 +7,6 @@ if [ -f ~/.jive ] ; then
 	. ~/.jive
 fi
 
-
 function set_doc_id {
   if [ -z "$1" ]; then
     echo -n "Please supply a Document ID: "
@@ -109,3 +108,30 @@ function update_document {
   fi
 }
 
+function search_place {
+  if [ -z "$1" ]; then
+    echo -n "Enter keyword for a place: "
+    read search_string
+  else
+    search_string=$1
+  fi
+  index=0
+  answer="n"
+  while [ "$answer" = "n" ]; do
+    curl -u "$USER_ID":"$USER_PW" "${JIVE_ENDPOINT}places?filter=search(${search_string})&count=25&startIndex=${index}" > tmp.txt
+    if [ "$(cat tmp.txt | tail -n +2 | jq .list[])" = "" ]; then
+      echo "There are no more places"
+      return
+    fi
+    cat tmp.txt | tail -n +2 | jq -r '.list[] | .id + "   " + .name'
+    echo -n "Have you found the place you were looking for? [y/n]? "
+    read answer
+    index=$(($index+25))
+  done
+}
+
+function set_place_id {
+  echo -n "Enter ID: "
+  read PLACE_ID
+  echo $PLACE_ID
+}
