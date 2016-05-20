@@ -17,6 +17,12 @@ function set_doc_id {
   fi
 }
 
+function set_doc_id_for_update {
+    echo -n "Please enter the name of document to update: "
+    read DOC_NAME
+    DOC_ID=$(cat .jivecli | awk -v var=$DOC_NAME '$1 == var {print $2}')
+}
+
 function set_login {
   if [ "$JIVE_USER" ] ; then
     USER_ID="$JIVE_USER"

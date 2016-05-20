@@ -66,5 +66,6 @@ curl -u "$USER_ID":"$USER_PW" \
     fi
   fi
 
+  echo ""${filename}" "${NEW_VERSION}"" >> .jivecli
 )
 }
