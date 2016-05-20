@@ -3,13 +3,15 @@
 #Stop on error
 
 function convert_md {
+  DEFAULT=README
   if [ -z "$JIVE_FILENAME" ] ; then
-    JIVE_FILENAME=README
-    echo -n "Pls enter your filename - must be in current dir, .md files only [$JIVE_FILENAME]:"
+    echo -n "Pls enter your filename - must be in current dir, .md files only [$DEFAULT]:"
     read filename
-  fi
-  if [ -z "$filename" ] ; then
-    filename=$JIVE_FILENAME
+    if [ -z "$filename" ] ; then
+      filename=$DEFAULT
+    fi
+  else
+    filename="$JIVE_FILENAME"
   fi
   if [ -f "${filename}.md" ] ; then
     echo "Processing ${filename}.md"
@@ -24,8 +26,8 @@ function jive_create_doc {
 
   set_login
   set_password
-  search_place
-  set_place_id
+  #search_place
+  #set_place_id
 (
 #set -o errexit
 #set -o xtrace
@@ -60,6 +62,6 @@ curl -u "$USER_ID":"$USER_PW" \
     fi
   fi
 
-  echo ""${filename}" "${NEW_VERSION}"" >> .jivecli
+  echo "${filename} ${NEW_VERSION}" >> .jivecli
 )
 }

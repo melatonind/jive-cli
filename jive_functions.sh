@@ -2,6 +2,8 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+PLACE_ID=95549
+
 source $DIR/lib/helper_functions.sh
 source $DIR/lib/create_doc.sh
 
