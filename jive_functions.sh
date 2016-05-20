@@ -14,7 +14,7 @@ function update {
   fi
 }
 
-function update_md {
+function update_html {
   set_doc_id $1
   set_login
   set_password
