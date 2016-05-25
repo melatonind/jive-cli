@@ -26,8 +26,8 @@ Can't remember your DOC ID? Search for the ID of an existing DOC
 `JIVE_SUBJECT="Subject to search" jive_search_by_subject`
 
 # Requirements
--bash
--jq
--pandoc
+* bash
+* jq
+* pandoc
 
 
