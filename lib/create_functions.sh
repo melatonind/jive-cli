@@ -1,6 +1,3 @@
-#!/usr/bin/env bash
-
-#Stop on error
 
 function convert_md {
   DEFAULT=README
