@@ -3,7 +3,7 @@
 Let *jive-cli* change the way you think about publishing in community!
 
 To get started, 
-`source jive_functions.sh`
+`source jive_cli.sh`
 
 
 Update an existing document in VIM:
@@ -11,13 +11,10 @@ Update an existing document in VIM:
 `jive_update <DOC-ID>`
 
 Upload your markdown file:
-`jive_create_doc`
+`jive_create_doc [filename.md]`
 
 Or update and existing version with
-`jive_update_doc <DOC-ID>`
-
-Want to bypass the filename prompt?
-`JIVE_FILENAME=README jive_update_doc <DOC-ID>`
+`jive_update_doc [filename.md] [<DOC-ID>]`
 
 Update an existing jive document by supplying an html file:
 `jive_update_html <DOC-ID>`
