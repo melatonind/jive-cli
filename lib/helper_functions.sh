@@ -38,14 +38,24 @@ JIVE_ENDPOINT="$JIVE_ENDPOINT"
 EOF
 }
 
-
+# If nothing supplied, prompt for value
+# If supplied "DOC-nnnnnn" then take nnnnnn
+# If supplied "nnnnnn" then take nnnnnn
+# otherwise, error
 function set_doc_id {
-  if [ -z "$1" ]; then
+  DOC_ID="$1"
+  if [ -z "$DOC_ID" ]; then
     echo -n "Please supply a Document ID: "
     read DOC_ID
+  fi
+  if [ "${DOC_ID:0:4}" = "DOC-" ] ; then
+	  DOC_ID="${DOC_ID:4}"
+  fi
+  if [[ "$DOC_ID" =~ ^[0-9]+$ ]] ; then 
+	  echo "Using DOC-$DOC_ID"
   else
-    DOC_ID=$1
-    echo "Set doc_id"
+	  echo "Invalid DOC ID"
+	  exit 1
   fi
 }
 
@@ -117,16 +127,25 @@ function load_document {
 }
 
 function edit_document {
+  if [ -z "$JIVE_EDITOR" ] ; then
+	  JIVE_EDITOR=vim
+	  if [ "$VISUAL" ] ; then
+		  JIVE_EDITOR="$VISUAL"
+	  elif [ "$EDITOR" ] ; then
+		  JIVE_EDITOR="$EDITOR"
+	  fi
+  fi
   echo -n "Would you like to edit "${SUBJECT}" [y/n]? "
   read answer
   if [ "${answer}" = "y" ]; then
-    vim $CONTENT
+    $JIVE_EDITOR $CONTENT
     if cmp -s $CONTENT $CONTENT_ORIGINAL ; then
       echo "No changes"
       false
     else
       echo "Changes detected"
-      CONTENT=$( cat $CONTENT | sed ':a;N;$!ba;s/\n/<br>/g' | jq --slurp --raw-input . )
+      #CONTENT=$( cat $CONTENT | sed ':a;N;$!ba;s/\n/<br>/g' | jq --slurp --raw-input . )
+      CONTENT=$( cat $CONTENT | jq --slurp --raw-input . )
       echo "Content is:"
       echo "$CONTENT"
       echo
