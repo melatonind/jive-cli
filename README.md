@@ -27,4 +27,11 @@ Can't remember your DOC ID? Search for the ID of an existing DOC
 * jq
 * pandoc
 
+# Authors
+* Mei Brough-Smyth
+* Kimie Nakahara
+* John Newbigin
+
+# License
+Please see [LICENSE.txt]
 
