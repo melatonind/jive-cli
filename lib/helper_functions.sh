@@ -77,35 +77,65 @@ function set_doc_id_for_update {
     return 1
   fi
   JIVE_FILENAME="${filename}"
-  DOC_ID=$(grep "^${filename} " .jivecli | tail -1 | cut -d ' ' -f 2)
+
+  load_doc_mapping "${JIVE_FILENAME}" "${REPO_NAME}"
 }
 
+# If we have a tty then use that
+# otherwise we have to assume the default
+# If you don't like that, set JIVE_USER in ~/.jive
 function set_login {
   if [ "$JIVE_USER" ] ; then
     USER_ID="$JIVE_USER"
   else
     local default_user=$USER
-    echo -n "Username [$default_user]: "
-    read username
-    if [ -z "$username" ]; then
-      USER_ID="$default_user"
+    if tty -s < /dev/tty ; then
+      echo -n "Username [$default_user]: " > /dev/tty
+      read username < /dev/tty
+      if [ -z "$username" ]; then
+        USER_ID="$default_user"
+      else
+        USER_ID="$username"
+      fi
     else
-      USER_ID="$username"
+      USER_ID="$default_user"
     fi
   fi
 }
 
+# If we have a tty, use that otherwise we are SOL
 function set_password {
-  read -s -p "Password: " USER_PW
-  echo
+  echo "Getting password"
+  if tty -s ; then
+    read -s -p "Password: " USER_PW
+    echo
+  elif tty -s < /dev/tty ; then
+    read -s -p "Password: " USER_PW > /dev/tty < /dev/tty
+    echo > /dev/tty
+  else
+    echo "Need a TTY to get the password"
+    exit 1
+  fi
 }
 
 function get_content_id {
-  echo "Retrieving content ID from DOC-${DOC_ID}..."
-  CONTENT_ID=$(curl -u "$USER_ID":"$USER_PW" "${JIVE_ENDPOINT}contents?filter=entityDescriptor(102,${DOC_ID})" | tail -n +2 | jq -r .list[].contentID)
+  if [ -z "${DOC_ID}" ] ; then
+	  echo "Error. Invalid DOC ID"
+	  exit 1
+  fi
+  echo -n "Retrieving content ID from DOC-${DOC_ID}..."
+  # tail -n +2 
+  CONTENT_ID=$(curl -sS -u "$USER_ID":"$USER_PW" "${JIVE_ENDPOINT}contents?filter=entityDescriptor(102,${DOC_ID})" | jq -r .list[].contentID)
+  if [[ "$CONTENT_ID" =~ ^[0-9]+$ ]] ; then 
+	  echo "$CONTENT_ID"
+  else
+	  echo "Error. Invalid CONTENT ID"
+	  exit 1
+  fi
 }
 
 function jive_search_by_subject {
+  JIVE_SUBJECT="$1"
   echo "Searching for '$JIVE_SUBJECT'"
   SEARCH=$(echo $JIVE_SUBJECT | tr " " ",")
   echo "Searching for '$SEARCH'"
@@ -115,10 +145,12 @@ function jive_search_by_subject {
 }
 
 function load_document {
-  echo "Retrieving DOC-${DOC_ID}..."
+  echo -n "Retrieving DOC-${DOC_ID}..."
   FILE1=$(mktemp -t jiveXXXX)
   FILE2=$(mktemp -t jiveXXXX)
-  curl -u "$USER_ID":"$USER_PW" "${JIVE_ENDPOINT}contents/$CONTENT_ID" | tail -n +2 > $FILE1
+  # tail -n +2
+  curl -sS -u "$USER_ID":"$USER_PW" "${JIVE_ENDPOINT}contents/$CONTENT_ID" > $FILE1
+  echo "done"
   SUBJECT=$( cat $FILE1 | jq -r .subject )
   cat $FILE1 | jq -r .content.text > $FILE2
   cat $FILE2 > $FILE1
@@ -135,20 +167,16 @@ function edit_document {
 		  JIVE_EDITOR="$EDITOR"
 	  fi
   fi
-  echo -n "Would you like to edit "${SUBJECT}" [y/n]? "
+  echo -n "Would you like to edit "${SUBJECT}" [Y/n]? "
   read answer
-  if [ "${answer}" = "y" ]; then
+  if [ "${answer}" = "y" -o "${answer}" = "Y" -o -z "${answer}" ]; then
     $JIVE_EDITOR $CONTENT
     if cmp -s $CONTENT $CONTENT_ORIGINAL ; then
       echo "No changes"
       false
     else
-      echo "Changes detected"
-      #CONTENT=$( cat $CONTENT | sed ':a;N;$!ba;s/\n/<br>/g' | jq --slurp --raw-input . )
+      echo -n "Changes detected. Saving..."
       CONTENT=$( cat $CONTENT | jq --slurp --raw-input . )
-      echo "Content is:"
-      echo "$CONTENT"
-      echo
       true
     fi
   else
@@ -156,6 +184,46 @@ function edit_document {
   fi
 }
 
+# repo contains the git repo name to store the DOC ID against
+# filename contains the filename index to store the DOC ID against
+# CONTENT contans json escaped page contents
+# SUBJECT contains the non-escaped page name
+# PLACE_ID contains the jive place_id (where to create the content)
+function create_document {
+  OUTPUT=$(mktemp -t jiveXXXX)
+  curl -u "$USER_ID":"$USER_PW" \
+     -k --header "Content-Type: application/json" \
+     -d '{ "type": "document",
+           "subject": "'"${SUBJECT}"'",
+           "visibility": "place",
+           "parent": "'"${JIVE_ENDPOINT}"'places/'"${PLACE_ID}"'",
+           "tags": [readme],
+           "content":
+              { "type": "text/html",
+                "text": '"${CONTENT}"'
+              }
+         }' \
+     "${JIVE_ENDPOINT}/contents" > $OUTPUT
+
+  FILETYPE=$(file $OUTPUT)
+  if [ "${FILETYPE%% *}" = "gzip" ] ; then
+    zcat $OUTPUT | grep "<title>"
+  else
+    NEW_ID=$(cat $OUTPUT | jq -r '.id')
+    if [ "$NEW_ID" = "null" -o "$NEW_ID" = "" ] ; then
+      cat $OUTPUT | jq -r '.error.status, .error.message '
+    else
+      echo "Created DOC-${NEW_ID}"
+      save_doc_mapping "$filename" "$REPO_NAME" "$NEW_ID"
+    fi
+  fi
+
+
+}
+
+# CONTENT contans json escaped page contents
+# SUBJECT contains the non-escaped page name
+# CONTENT_ID contains the JIVE CONTENT_ID
 function update_document {
   OUTPUT=$(mktemp -t jiveXXXX)
 
@@ -169,10 +237,10 @@ function update_document {
               }
          }' 
 
-  #echo "$JSON" > broken.json
+  # Validate the JSON
   echo "$JSON" | jq . > /dev/null || return 1
 
-  curl -s -u "$USER_ID":"$USER_PW" -X PUT \
+  curl -sS -u "$USER_ID":"$USER_PW" -X PUT \
      -k --header "Content-Type: application/json" \
      -d "$JSON" \
      "${JIVE_ENDPOINT}contents/${CONTENT_ID}" > $OUTPUT
@@ -216,3 +284,107 @@ function set_place_id {
   read PLACE_ID
   echo $PLACE_ID
 }
+
+function convert_md {
+  DEFAULT=README
+  if [ -z "$JIVE_FILENAME" ] ; then
+    echo -n "Pls enter your filename - must be in current dir, .md files only [$DEFAULT]:"
+    read filename
+    if [ -z "$filename" ] ; then
+      filename=$DEFAULT
+    fi
+  else
+    filename="$JIVE_FILENAME"
+  fi
+  if [ -f "${filename}.md" ] ; then
+    echo "Processing ${filename}.md"
+  else
+    echo "File not found: ${filename}.md"
+    return 1
+  fi
+  CONTENT=$(pandoc -f markdown_github -t html "${filename}.md" | jq --slurp --raw-input . )
+}
+
+function load_repo {
+  REPO_NAME=`git config --local remote.origin.url|sed -n 's#.*/\([^.]*\)\.git#\1#p'`
+}
+
+function jive_create_doc {
+
+  set_login
+  set_password
+  #search_place
+  #set_place_id
+
+  convert_md
+
+  REPO_NAME=`git config --local remote.origin.url|sed -n 's#.*/\([^.]*\)\.git#\1#p'`
+  OUTPUT=$(mktemp -t jiveXXXX)
+  curl -u "$USER_ID":"$USER_PW" \
+     -k --header "Content-Type: application/json" \
+     -d '{ "type": "document",
+           "subject": "'"${REPO_NAME}"' '"${filename}"'",
+           "visibility": "place",
+           "parent": "'"${JIVE_ENDPOINT}"'places/'"${PLACE_ID}"'",
+           "tags": [readme],
+           "content":
+              { "type": "text/html",
+                "text": '"${CONTENT}"'
+              }
+         }' \
+     "${JIVE_ENDPOINT}/contents" > $OUTPUT
+
+  FILETYPE=$(file $OUTPUT)
+  if [ "${FILETYPE%% *}" = "gzip" ] ; then
+    zcat $OUTPUT | grep "<title>"
+  else
+    NEW_ID=$(cat $OUTPUT | jq -r '.id')
+    if [ "$NEW_ID" = "null" -o "$NEW_ID" = "" ] ; then
+      cat $OUTPUT | jq -r '.error.status, .error.message '
+    else
+      echo "Created DOC-${NEW_ID}"
+      save_doc_mapping "$filename" "$REPO_NAME" "$NEW_ID"
+    fi
+  fi
+
+}
+
+# For documents created by jive-cli we keep a list of
+# file -> DOC_ID mappings
+# to allow for easy updates
+# This is a text file which can added to scm along with the source document
+function save_doc_mapping {
+  filename="$1"
+  repo="$2"
+  id="$3"
+  echo "${filename}|${repo}|${id}"
+
+  #delete_doc_mapping "$filename" "$repo"
+  echo "${filename}|${repo}|${id}" >> .jivecli
+}
+
+function load_doc_mapping {
+  filename="$1"
+  repo="$2"
+
+  # We don't look at the repo yet
+  DOC_ID=$(grep "^${filename}|" .jivecli | tail -1 | cut -d '|' -f 3)
+
+  if [ -z "${DOC_ID}" ] ; then
+    # try the old config format
+    DOC_ID=$(grep "^${filename} " .jivecli | tail -1 | cut -d ' ' -f 2)
+  fi
+}
+
+function delete_doc_mapping {
+  filename="$1"
+  repo="$2"
+
+  OUTPUT=$(mktemp -t jiveXXXX)
+  cat .jivecli | \
+    awk "BEGIN { FS = \"|\" } ; { if ( \$1 == \"$filename\" && \$2 == \"$repo\") {} else { print \$0 } }" | \
+    awk "BEGIN { FS = \" \" } ; { if ( \$1 == \"$basename\" ) {} else { print \$0 } }" | \
+    > $OUTPUT
+  mv $OUTPUT .jivecli
+}
+
