@@ -302,7 +302,9 @@ function convert_md {
     echo "File not found: ${filename}.md"
     return 1
   fi
-  CONTENT=$(pandoc -f markdown_github -t html "${filename}.md" | jq --slurp --raw-input . )
+  #CONTENT=$(pandoc -f markdown_github -t html5 --no-highlight --email-obfuscation=none "${filename}.md" | jq --slurp --raw-input . )
+  MUNGE=$JIVE_DIR/lib/munge.pl
+  CONTENT=$(echo '> _Uploaded by [JiveCLI](https://github.com/melatonind/jive-cli/)_' | cat "${filename}.md" - | pandoc -f markdown_github -t native | $MUNGE | pandoc -f native -t html5 --email-obfuscation=none | jq --slurp --raw-input . )
 }
 
 function load_repo {
@@ -319,6 +321,9 @@ function jive_create_doc {
   convert_md
 
   REPO_NAME=`git config --local remote.origin.url|sed -n 's#.*/\([^.]*\)\.git#\1#p'`
+
+  
+
   OUTPUT=$(mktemp -t jiveXXXX)
   curl -u "$USER_ID":"$USER_PW" \
      -k --header "Content-Type: application/json" \
