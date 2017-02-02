@@ -22,8 +22,12 @@ function jive_create {
   if [ "$1" ] ; then
     JIVE_FILENAME="$1"
   fi
-  load_repo
-  SUBJECT="${REPO_NAME} ${filename}"
+  if [ "$JIVE_SUBJECT" ] ; then
+	SUBJECT="$JIVE_SUBJECT"
+  else
+  	load_repo
+  	SUBJECT="${REPO_NAME} ${filename}"
+  fi
   if convert_md ; then
     create_document
   fi
@@ -59,7 +63,14 @@ function jive_update_doc {
   if [ "$1" ] ; then
     JIVE_FILENAME="$1"
   fi
-  load_repo
+
+  if [ "$JIVE_SUBJECT" ] ; then
+	SUBJECT="$JIVE_SUBJECT"
+  else
+  	load_repo
+  	SUBJECT="${REPO_NAME} ${filename}"
+  fi
+ 
   if convert_md ; then
     update_document
   fi
