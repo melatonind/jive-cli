@@ -1,4 +1,3 @@
-PLACE_ID=95549
 
 # Edit an existing JIVE DOC in a text editor
 # Uses the raw content from JIVE
@@ -18,6 +17,7 @@ function jive_create {
   load_config
   set_login
   set_password
+  set_place_id
 
   if [ "$1" ] ; then
     JIVE_FILENAME="$1"
@@ -77,11 +77,17 @@ function jive_update_doc {
 }
 
 function jive_search {
-echo "IN $COMMAND $*"
   load_config
   set_login
   set_password
   jive_search_by_subject "$1"
+}
+
+function jive_search_places {
+  load_config
+  set_login
+  set_password
+  jive_search_by_place "$1"
 }
 
 function jive_config {

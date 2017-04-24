@@ -139,7 +139,7 @@ function jive_search_by_subject {
   echo "Searching for '$JIVE_SUBJECT'"
   SEARCH=$(echo $JIVE_SUBJECT | tr " " ",")
   echo "Searching for '$SEARCH'"
-  curl -u "$USER_ID":"$USER_PW" "${JIVE_ENDPOINT}contents?filter=search($SEARCH)" | \
+  curl -sS -u "$USER_ID":"$USER_PW" "${JIVE_ENDPOINT}contents?filter=search($SEARCH)" | \
 	 tail -n +2 | \
 	 jq -r " .list | map(if .subject == \"$JIVE_SUBJECT\" then ( \"DOC-\" + .id + \" in \" + .parentPlace.name + \" (\" + .author.displayName + \")\" ) else empty end ) "
 }
@@ -191,7 +191,7 @@ function edit_document {
 # PLACE_ID contains the jive place_id (where to create the content)
 function create_document {
   OUTPUT=$(mktemp -t jiveXXXX)
-  curl -u "$USER_ID":"$USER_PW" \
+  curl -sS -u "$USER_ID":"$USER_PW" \
      -k --header "Content-Type: application/json" \
      -d '{ "type": "document",
            "subject": "'"${SUBJECT}"'",
@@ -257,32 +257,55 @@ function update_document {
   fi
 }
 
-function search_place {
+# $1 = search string
+# $2 = "exact" - find an exact match and set PLACE_ID
+#    = "print" - print out a list for the user
+function jive_search_by_place {
   if [ -z "$1" ]; then
     echo -n "Enter keyword for a place: "
     read search_string
   else
     search_string=$1
   fi
+  search_string=$(echo "$search_string" | tr " " ",")
   index=0
   answer="n"
   while [ "$answer" = "n" ]; do
-    curl -u "$USER_ID":"$USER_PW" "${JIVE_ENDPOINT}places?filter=search(${search_string})&count=25&startIndex=${index}" > tmp.txt
-    if [ "$(cat tmp.txt | tail -n +2 | jq .list[])" = "" ]; then
-      echo "There are no more places"
+    curl -sS -u "$USER_ID":"$USER_PW" "${JIVE_ENDPOINT}places?filter=search(${search_string})&count=25&startIndex=${index}" > tmp.txt
+    if [ "$(cat tmp.txt | jq .list[])" = "" ]; then
+      #echo "There are no more places"
       return
     fi
-    cat tmp.txt | tail -n +2 | jq -r '.list[] | .placeID + "   " + .name'
-    echo -n "Have you found the place you were looking for? [y/n]? "
-    read answer
+    if [ "$2" = "exact" ] ; then
+      ID=$(cat tmp.txt | jq -r ".list[] | select(.name == \"$1\") | .placeID")
+      if [ "$ID" ] ; then
+        PLACE_ID=$ID
+	return
+      fi
+    else
+      cat tmp.txt | jq -r '.list[] | .placeID + "   " + .name'
+    fi
+    #echo -n "Have you found the place you were looking for? [y/n]? "
+    #read answer
+    answer=n # keep searching
     index=$(($index+25))
   done
+  if [ "$2" = "exact" ] ; then
+    echo "No match found for place '$1'"
+    echo "Select from:"
+    jive_search_by_place "$1"
+    exit 1
+  fi
 }
 
 function set_place_id {
+  if [ "$JIVE_PLACE" ] ; then
+    jive_search_by_place "$JIVE_PLACE" exact
+  else
   echo -n "Enter ID: "
   read PLACE_ID
   echo $PLACE_ID
+  fi
 }
 
 function convert_md {
@@ -316,7 +339,7 @@ function jive_create_doc {
   set_login
   set_password
   #search_place
-  #set_place_id
+  set_place_id
 
   convert_md
 
@@ -325,7 +348,7 @@ function jive_create_doc {
   
 
   OUTPUT=$(mktemp -t jiveXXXX)
-  curl -u "$USER_ID":"$USER_PW" \
+  curl -sS -u "$USER_ID":"$USER_PW" \
      -k --header "Content-Type: application/json" \
      -d '{ "type": "document",
            "subject": "'"${REPO_NAME}"' '"${filename}"'",

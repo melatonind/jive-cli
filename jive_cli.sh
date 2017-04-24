@@ -9,7 +9,7 @@
 # 3. Process the main command
 #
 
-JIVE_COMMANDS="jive_config jive_create jive_edit jive_update_html jive_update_md jive_update_doc jive_search"
+JIVE_COMMANDS="jive_config jive_create jive_edit jive_update_html jive_update_md jive_update_doc jive_search jive_search_places"
 
 JIVE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 if [ "${BASH_SOURCE[0]}" != "${0}" ] ; then
