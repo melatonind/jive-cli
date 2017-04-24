@@ -270,20 +270,21 @@ function jive_search_by_place {
   search_string=$(echo "$search_string" | tr " " ",")
   index=0
   answer="n"
+  tmp=$(mktemp -t jiveXXXX)
   while [ "$answer" = "n" ]; do
-    curl -sS -u "$USER_ID":"$USER_PW" "${JIVE_ENDPOINT}places?filter=search(${search_string})&count=25&startIndex=${index}" > tmp.txt
-    if [ "$(cat tmp.txt | jq .list[])" = "" ]; then
+    curl -sS -u "$USER_ID":"$USER_PW" "${JIVE_ENDPOINT}places?filter=search(${search_string})&count=25&startIndex=${index}" > $tmp
+    if [ "$(cat $tmp | jq .list[])" = "" ]; then
       #echo "There are no more places"
       return
     fi
     if [ "$2" = "exact" ] ; then
-      ID=$(cat tmp.txt | jq -r ".list[] | select(.name == \"$1\") | .placeID")
+      ID=$(cat $tmp | jq -r ".list[] | select(.name == \"$1\") | .placeID")
       if [ "$ID" ] ; then
         PLACE_ID=$ID
 	return
       fi
     else
-      cat tmp.txt | jq -r '.list[] | .placeID + "   " + .name'
+      cat $tmp | jq -r '.list[] | .placeID + "   " + .name'
     fi
     #echo -n "Have you found the place you were looking for? [y/n]? "
     #read answer
