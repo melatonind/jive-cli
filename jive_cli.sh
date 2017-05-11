@@ -11,6 +11,11 @@
 
 JIVE_COMMANDS="jive_config jive_create jive_edit jive_update_html jive_update_md jive_update_doc jive_search jive_search_places"
 
+if [ "$JIVE_DEBUG" ] ; then
+	env | grep ^JIVE_
+	echo
+fi
+
 JIVE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 if [ "${BASH_SOURCE[0]}" != "${0}" ] ; then
   for COMMAND in $JIVE_COMMANDS ; do

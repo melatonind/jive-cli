@@ -23,7 +23,7 @@ function jive_create {
     JIVE_FILENAME="$1"
   fi
   if [ "$JIVE_SUBJECT" ] ; then
-	SUBJECT="$JIVE_SUBJECT"
+      SUBJECT="$(echo "$JIVE_SUBJECT" | sed 's|%20| |g')"
   else
   	load_repo
   	SUBJECT="${REPO_NAME} ${filename}"

@@ -105,16 +105,20 @@ function set_login {
 
 # If we have a tty, use that otherwise we are SOL
 function set_password {
-  echo "Getting password"
-  if tty -s ; then
-    read -s -p "Password: " USER_PW
-    echo
-  elif tty -s < /dev/tty ; then
-    read -s -p "Password: " USER_PW > /dev/tty < /dev/tty
-    echo > /dev/tty
+  if [ "$JIVE_PASSWORD" ] ; then
+    USER_PW="$JIVE_PASSWORD"
   else
-    echo "Need a TTY to get the password"
-    exit 1
+    echo "Getting password"
+    if tty -s ; then
+      read -s -p "Password: " USER_PW
+      echo
+    elif tty -s < /dev/tty ; then
+      read -s -p "Password: " USER_PW > /dev/tty < /dev/tty
+      echo > /dev/tty
+    else
+      echo "Need a TTY to get the password"
+      exit 1
+    fi
   fi
 }
 
@@ -152,6 +156,7 @@ function load_document {
   curl -sS -u "$USER_ID":"$USER_PW" "${JIVE_ENDPOINT}contents/$CONTENT_ID" > $FILE1
   echo "done"
   SUBJECT=$( cat $FILE1 | jq -r .subject )
+  JIVE_SUBJECT="$SUBJECT"
   cat $FILE1 | jq -r .content.text > $FILE2
   cat $FILE2 > $FILE1
   CONTENT=$FILE1
@@ -301,7 +306,16 @@ function jive_search_by_place {
 
 function set_place_id {
   if [ "$JIVE_PLACE" ] ; then
+    JIVE_PLACE="$(echo "$JIVE_PLACE" | sed 's|%20| |g')"
     jive_search_by_place "$JIVE_PLACE" exact
+    if [ -z "$PLACE_ID" ] ; then
+      echo "No place ID found for '$JIVE_PLACE'"
+      exit 1
+    fi
+
+    if [ "$JIVE_DEBUG" ] ; then
+      echo "Found Place ID $PLACE_ID for place '$JIVE_PLACE'"
+    fi
   else
   echo -n "Enter ID: "
   read PLACE_ID
