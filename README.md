@@ -5,6 +5,9 @@ Let *jive-cli* change the way you think about publishing in community!
 To get started, 
 `source jive_cli.sh`
 
+or use it directly,
+`jive_cli.sh <command> ...`
+
 
 Update an existing document in VIM:
 

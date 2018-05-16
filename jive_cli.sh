@@ -41,6 +41,7 @@ else
     fi
   done
   echo "Unknown command"
+  echo "Available commands: $JIVE_COMMANDS"
   exit 1
 fi
 
