@@ -71,7 +71,7 @@ function set_doc_id_for_update {
     filename="$JIVE_FILENAME"
   fi
   if [ -f "${filename}.md" ] ; then
-    echo "Processing ${filename}.md"
+    echo "Preparing for ${filename}.md"
   else
     echo "File not found: ${filename}.md"
     return 1
@@ -134,6 +134,7 @@ function get_content_id {
 	  echo "$CONTENT_ID"
   else
 	  echo "Error. Invalid CONTENT ID"
+	  curl -sS -u "$USER_ID":"$USER_PW" "${JIVE_ENDPOINT}contents?filter=entityDescriptor(102,${DOC_ID})" | jq .message
 	  exit 1
   fi
 }
@@ -157,6 +158,8 @@ function load_document {
   echo "done"
   SUBJECT=$( cat $FILE1 | jq -r .subject )
   JIVE_SUBJECT="$SUBJECT"
+  PLACE_ID=$(cat $FILE1 | jq -r .parentPlace.placeID )
+  JIVE_TAGS_JSON=$(cat $FILE1 | jq .tags )
   cat $FILE1 | jq -r .content.text > $FILE2
   cat $FILE2 > $FILE1
   CONTENT=$FILE1
@@ -229,13 +232,20 @@ function create_document {
 # CONTENT contans json escaped page contents
 # SUBJECT contains the non-escaped page name
 # CONTENT_ID contains the JIVE CONTENT_ID
+# PLACE_ID containts the place ID loaded from the existing content
 function update_document {
   OUTPUT=$(mktemp -t jiveXXXX)
+
+  if [ -z "$JIVE_TAGS_JSON" ] ; then
+	  JIVE_TAGS_JSON='[ ]'
+  fi
 
   JSON='{ "subject": "'"${SUBJECT}"'",
            "type": "document",
            "status" : "published",
-           "tags" : [ ],
+           "visibility": "place",
+           "parent": "'"${JIVE_ENDPOINT}"'places/'"${PLACE_ID}"'",
+           "tags" : '"${JIVE_TAGS_JSON}"',
            "content":
               { "type": "text/html",
                 "text": '"${CONTENT}"'
@@ -317,7 +327,7 @@ function set_place_id {
       echo "Found Place ID $PLACE_ID for place '$JIVE_PLACE'"
     fi
   else
-  echo -n "Enter ID: "
+  echo -n "Enter destination place ID: "
   read PLACE_ID
   echo $PLACE_ID
   fi
@@ -335,7 +345,7 @@ function convert_md {
     filename="$JIVE_FILENAME"
   fi
   if [ -f "${filename}.md" ] ; then
-    echo "Processing ${filename}.md"
+    echo "Converting ${filename}.md"
   else
     echo "File not found: ${filename}.md"
     return 1
