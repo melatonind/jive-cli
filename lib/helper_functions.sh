@@ -140,12 +140,13 @@ function get_content_id {
 }
 
 function jive_search_by_subject {
+  set -x
+  echo $*
   JIVE_SUBJECT="$1"
   echo "Searching for '$JIVE_SUBJECT'"
   SEARCH=$(echo $JIVE_SUBJECT | tr " " ",")
   echo "Searching for '$SEARCH'"
   curl -sS -u "$USER_ID":"$USER_PW" "${JIVE_ENDPOINT}contents?filter=search($SEARCH)" | \
-	 tail -n +2 | \
 	 jq -r " .list | map(if .subject == \"$JIVE_SUBJECT\" then ( \"DOC-\" + .id + \" in \" + .parentPlace.name + \" (\" + .author.displayName + \")\" ) else empty end ) "
 }
 

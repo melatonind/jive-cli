@@ -80,14 +80,14 @@ function jive_search {
   load_config
   set_login
   set_password
-  jive_search_by_subject "$1"
+  jive_search_by_subject "$@"
 }
 
 function jive_search_places {
   load_config
   set_login
   set_password
-  jive_search_by_place "$1"
+  jive_search_by_place "$@"
 }
 
 function jive_config {
